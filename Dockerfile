@@ -17,7 +17,7 @@ COPY ["requirements.txt", "Makefile", "./"]
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install fastapi uvicorn
-RUN pip install --no-cache-dir google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2
+RUN pip install --no-cache-dir google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2 huggingface_hub[hf_xet]
 
 # Create TTS license acceptance file to avoid interactive prompts
 RUN mkdir -p /root/.cache/coqui && \

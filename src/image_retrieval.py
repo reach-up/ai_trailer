@@ -95,7 +95,9 @@ logger.info("\n##### Starting step 4 frame retrieval #####\n")
 
 logger.info(f"Loading {configs['frame_ranking']['model_id']} as the similarity model")
 model = SentenceTransformer(
-    configs["frame_ranking"]["model_id"], device=configs["frame_ranking"]["device"]
+    configs["frame_ranking"]["model_id"], 
+    device=configs["frame_ranking"]["device"],
+    use_fast=True  # Use fast image processor for better performance
 )
 
 img_filepaths = list(FRAMES_DIR.glob("*.jpg"))
