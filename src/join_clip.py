@@ -4,7 +4,7 @@ import shutil
 import traceback
 from pathlib import Path
 
-from moviepy.editor import VideoFileClip, concatenate_videoclips
+from moviepy import VideoFileClip, CompositeVideoClip
 
 from src.common import SCENES_DIR, TRAILER_DIR
 
@@ -91,7 +91,7 @@ def join_clips(clip_combinations: list[tuple[str]], trailer_dir: Path) -> None:
 
             logger.info("Concatenating %s clips for trailer %s", len(clips), idx + 1)
             try:
-                trailer = concatenate_videoclips(clips)
+                trailer = CompositeVideoClip(clips)
                 logger.info(
                     "Concatenation successful! Trailer duration: %s", trailer.duration
                 )
