@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 import subprocess
 from TTS.api import TTS
 from TTS.tts.configs.xtts_config import XttsConfig
-from TTS.tts.models.xtts import XttsAudioConfig
+from TTS.tts.models.xtts import XttsAudioConfig, XttsArgs
 from TTS.config.shared_configs import BaseDatasetConfig
 import torch.serialization
 
@@ -10,8 +10,10 @@ import torch.serialization
 torch.serialization.add_safe_globals([
     XttsConfig,
     XttsAudioConfig,
-    BaseDatasetConfig
+    BaseDatasetConfig,
+    XttsArgs
 ])
+
 
 app = FastAPI()
 
