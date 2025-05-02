@@ -127,38 +127,27 @@ async def generate_trailer(request: Request):
         # Use the -m flag to run the module as a package
         logger.info("Starting trailer generation process with main.py")
 
-        # Run the subprocess and capture output
-        subprocess.run(
-            ["python", "-m", "src.main"], capture_output=True, text=True, check=True
-        )
-
-        # Check if the process completed successfully
-        # if process.returncode != 0:
-        #     logger.error("Trailer generation failed with error:\n%s", process.stderr)
-
-        #     # Extract just the important error message without all the logs
-        #     error_lines = process.stderr.split("\n")
-        #     actual_error = "Unknown error"
-
-        #     # Look for the actual error message (usually after ERROR or Exception)
-        #     for line in error_lines:
-        #         if "ERROR -" in line and "Error" in line:
-        #             actual_error = line.split("ERROR -")[1].strip()
-        #             break
-        #         elif "Traceback" in line:
-        #             # Find the last line of the traceback, which contains the actual error
-        #             for i in range(len(error_lines) - 1, 0, -1):
-        #                 if error_lines[i] and not error_lines[i].startswith(" "):
-        #                     actual_error = error_lines[i].strip()
-        #                     break
-        #             break
-
-        #     return {
-        #         "status": "error",
-        #         "message": "Trailer generation failed",
-        #         "error": actual_error,
-        #         "log_available": True,  # Indicate that full logs are available on the server
-        #     }
+        try:
+            # Run the subprocess without capturing output so logs appear in server console
+            result = subprocess.run(
+                ["python", "-m", "src.main"],
+                check=True  # This will raise an exception if the process exits with non-zero status
+            )
+            
+            logger.info("Trailer generation process completed with exit code %d", result.returncode)
+            return {"status": "success", "video": video_path}
+            
+        except subprocess.CalledProcessError as e:
+            logger.error("Trailer generation failed with exit code %d", e.returncode)
+            
+            # Since we're not capturing output, we can't parse the error from process output
+            # But the logs will be visible in the server console
+            return {
+                "status": "error",
+                "message": "Trailer generation failed",
+                "error": f"Process failed with exit code {e.returncode}",
+                "log_available": True  # Indicate that full logs are available on the server
+            }
 
         logger.info("Trailer generation complete")
         return {"status": "success", "video": video_path}
