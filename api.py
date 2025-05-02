@@ -32,8 +32,16 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Load TTS model once at startup
-tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2")
+# We'll lazy-load the TTS model on first use to improve startup time
+tts = None
+
+def get_tts_model():
+    global tts
+    if tts is None:
+        logger.info("Loading TTS model - this may take a moment...")
+        tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2")
+        logger.info("TTS model loaded successfully")
+    return tts
 
 
 @app.post("/generate_trailer")
@@ -114,9 +122,25 @@ async def generate_trailer(request: Request):
         # We need to run it in a way that allows it to find the src module
         # Use the -m flag to run the module as a package
         logger.info("Starting trailer generation process with main.py")
-        subprocess.run(["python", "-m", "src.main"])
-
-        return {"status": "started", "video": video_path}
+        
+        # Run the subprocess and capture output
+        process = subprocess.run(
+            ["python", "-m", "src.main"],
+            capture_output=True,
+            text=True
+        )
+        
+        # Check if the process completed successfully
+        if process.returncode != 0:
+            logger.error("Trailer generation failed with error:\n%s", process.stderr)
+            return {
+                "status": "error", 
+                "message": "Trailer generation failed",
+                "details": process.stderr
+            }
+            
+        logger.info("Trailer generation complete")
+        return {"status": "success", "video": video_path}
     except json.JSONDecodeError as e:
         return {"error": f"Invalid JSON format: {str(e)}"}
     except Exception as e:
