@@ -5,6 +5,7 @@ import json
 import io
 import base64
 import yaml
+import logging
 from pathlib import Path
 from TTS.api import TTS
 from TTS.tts.configs.xtts_config import XttsConfig
@@ -25,6 +26,11 @@ torch.serialization.add_safe_globals(
 )
 
 app = FastAPI()
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Load TTS model once at startup
 tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2")
