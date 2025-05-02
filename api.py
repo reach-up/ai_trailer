@@ -12,7 +12,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 import io
 
-# Allow specific classes for PyTorch unpickling
+# Allow necessary globals for torch.load
 torch.serialization.add_safe_globals([
     XttsConfig,
     XttsAudioConfig,
@@ -29,38 +29,39 @@ tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2")
 async def generate_trailer(request: Request):
     data = await request.json()
     plot = data.get("plot", "Default plot...")
-    file_id = data.get("file_id")  # now using file_id, not URL
+    file_id = data.get("file_id")
 
     if not file_id:
-        return {"error": "file_id is required"}
+        return {"error": "Missing file_id"}
 
-    # Save the plot to plot.txt
+    # Save plot to plot.txt
     with open("plot.txt", "w") as f:
         f.write(plot)
 
-    # Setup Google Drive API client
-    SERVICE_ACCOUNT_FILE = "service_account.json"
+    # Setup Google Drive API
+    SERVICE_ACCOUNT_FILE = "/app/keys/service_account.json"  # Update path as needed
     SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
     credentials = service_account.Credentials.from_service_account_file(
         SERVICE_ACCOUNT_FILE, scopes=SCOPES
     )
-    service = build('drive', 'v3', credentials=credentials)
+    drive_service = build('drive', 'v3', credentials=credentials)
 
-    # Prepare to download the video
+    # Download video
     video_path = "input_video.mp4"
-    request_drive = service.files().get_media(fileId=file_id)
+    request_drive = drive_service.files().get_media(fileId=file_id)
     fh = io.FileIO(video_path, 'wb')
     downloader = MediaIoBaseDownload(fh, request_drive)
 
     done = False
     while not done:
         status, done = downloader.next_chunk()
-        print(f"Download {int(status.progress() * 100)}%.")
+        if status:
+            print(f"Download progress: {int(status.progress() * 100)}%")
 
     print("Video downloaded:", video_path)
 
-    # Run the processing script
+    # Run main processing script
     subprocess.run(["python", "src/main.py"])
 
     return {"status": "started", "video": video_path}
