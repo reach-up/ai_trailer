@@ -1,5 +1,6 @@
 project_dir: 'projects'
 project_name: Natural_History_Museum
+movies_dir: 'movies'
 video_path: 'movies/Natural_History_Museum.mp4'
 plot_filename: 'plot.txt'
 video_retrieval:

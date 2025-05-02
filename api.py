@@ -4,11 +4,16 @@ import os
 import json
 import io
 import base64
+import yaml
+from pathlib import Path
 from TTS.api import TTS
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import XttsAudioConfig, XttsArgs
 from TTS.config.shared_configs import BaseDatasetConfig
 import torch.serialization
+
+# Import from local modules
+from src.common import MOVIES_DIR, configs
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -27,46 +32,66 @@ tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2")
 
 @app.post("/generate_trailer")
 async def generate_trailer(request: Request):
-    data = await request.json()
-    plot = data.get("plot", "Default plot...")
-    file_id = data.get("file_id")
+    try:
+        data = await request.json()
+        plot = data.get("plot", "Default plot...")
+        file_id = data.get("file_id")
 
-    if not file_id:
-        return {"error": "Missing file_id"}
+        if not file_id:
+            return {"error": "Missing file_id"}
 
-    # Save plot to file
-    with open("plot.txt", "w") as f:
-        f.write(plot)
+        # Save plot to file
+        with open("plot.txt", "w") as f:
+            f.write(plot)
 
-    # Load service account credentials from environment secret
-    SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
-    if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON"):
-        decoded = base64.b64decode(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]).decode(
-            "utf-8"
+        # Load service account credentials from environment secret
+        SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
+        if os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON"):
+            decoded = base64.b64decode(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]).decode(
+                "utf-8"
+            )
+            service_account_info = json.loads(decoded)
+        else:
+            raise RuntimeError("No service account env var provided.")
+        credentials = service_account.Credentials.from_service_account_info(
+            service_account_info, scopes=SCOPES
         )
-        service_account_info = json.loads(decoded)
-    else:
-        raise RuntimeError("No service account env var provided.")
-    credentials = service_account.Credentials.from_service_account_info(
-        service_account_info, scopes=SCOPES
-    )
-    drive_service = build("drive", "v3", credentials=credentials)
+        drive_service = build("drive", "v3", credentials=credentials)
 
-    # Download video from Google Drive
-    video_path = "input_video.mp4"
-    request_drive = drive_service.files().get_media(fileId=file_id)
-    fh = io.FileIO(video_path, "wb")
-    downloader = MediaIoBaseDownload(fh, request_drive)
+        # Create a filename based on the file_id for uniqueness
+        filename = f"input_{file_id[-6:]}.mp4"  # Use last 6 chars of ID for brevity
+        video_path = str(MOVIES_DIR / filename)
+        
+        # Update configs with the actual video path that was used
+        configs["video_path"] = video_path
+        
+        # Save updated configs for future reference
+        with open("configs.yaml", "w") as f:
+            yaml.safe_dump(configs, f)
+            
+        # Download video from Google Drive
+        request_drive = drive_service.files().get_media(fileId=file_id)
+        fh = io.FileIO(video_path, "wb")
+        downloader = MediaIoBaseDownload(fh, request_drive)
 
-    done = False
-    while not done:
-        status, done = downloader.next_chunk()
-        if status:
-            print(f"Download progress: {int(status.progress() * 100)}%")
+        done = False
+        while not done:
+            status, done = downloader.next_chunk()
+            if status:
+                print(f"Download progress: {int(status.progress() * 100)}%")
 
-    print("Video downloaded:", video_path)
+        print("Video downloaded:", video_path)
 
-    # Run processing script
-    subprocess.run(["python", "src/main.py"])
+        # Run the main processing script
+        # It will use the updated configs.yaml file
+        subprocess.run(["python", "src/main.py"])
 
-    return {"status": "started", "video": video_path}
+        return {"status": "started", "video": video_path}
+    except json.JSONDecodeError as e:
+        return {"error": f"Invalid JSON format: {str(e)}"}
+    except Exception as e:
+        return {"error": f"An error occurred: {str(e)}"}
+
+@app.get("/generate_trailer")
+async def get_generate_trailer():
+    return {"message": "This endpoint requires a POST request with JSON data including 'plot' and 'file_id' fields."}
