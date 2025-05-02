@@ -34,11 +34,11 @@ def get_audio_clips(clip_volume: float, voice_volume: float) -> None:
 
                 mixed_audio = CompositeAudioClip(
                     [
-                        clip.audio.volumex(clip_volume),
-                        audio.volumex(voice_volume),
+                        clip.audio * clip_volume,
+                        audio * voice_volume,
                     ]
                 )
-                clip.set_audio(mixed_audio).write_videofile(
+                clip.with_audio(mixed_audio).write_videofile(
                     f"{audio_clips_dir}/audio_clip_{clip_name}.mp4",
                     verbose=False,
                     logger=None,
