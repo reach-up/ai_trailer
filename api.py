@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Request
 import subprocess
 import os
+import json
+import io
+
 from TTS.api import TTS
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import XttsAudioConfig, XttsArgs
@@ -10,9 +13,8 @@ import torch.serialization
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
-import io
 
-# Allow necessary globals for torch.load
+# Allow torch to safely load custom model objects
 torch.serialization.add_safe_globals([
     XttsConfig,
     XttsAudioConfig,
@@ -22,7 +24,7 @@ torch.serialization.add_safe_globals([
 
 app = FastAPI()
 
-# Load TTS model once
+# Load TTS model once at startup
 tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2")
 
 @app.post("/generate_trailer")
@@ -34,20 +36,17 @@ async def generate_trailer(request: Request):
     if not file_id:
         return {"error": "Missing file_id"}
 
-    # Save plot to plot.txt
+    # Save plot to file
     with open("plot.txt", "w") as f:
         f.write(plot)
 
-    # Setup Google Drive API
-    SERVICE_ACCOUNT_FILE = "/app/keys/service_account.json"  # Update path as needed
+    # Load service account credentials from environment secret
     SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
-
-    credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=SCOPES
-    )
+    service_account_info = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
+    credentials = service_account.Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
     drive_service = build('drive', 'v3', credentials=credentials)
 
-    # Download video
+    # Download video from Google Drive
     video_path = "input_video.mp4"
     request_drive = drive_service.files().get_media(fileId=file_id)
     fh = io.FileIO(video_path, 'wb')
@@ -61,7 +60,7 @@ async def generate_trailer(request: Request):
 
     print("Video downloaded:", video_path)
 
-    # Run main processing script
+    # Run processing script
     subprocess.run(["python", "src/main.py"])
 
     return {"status": "started", "video": video_path}

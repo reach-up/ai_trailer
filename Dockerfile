@@ -1,21 +1,15 @@
 FROM python:3.11
 
-# ---------------------------------------------------------------
-# Required to install `sudachipy` a requirement from `TTS`
+# Required to install `sudachipy` (used by Coqui TTS)
 ENV PATH=$PATH:/root/.cargo/bin
-RUN curl https://sh.rustup.rs -sSf > /rust.sh && sh /rust.sh -y \
-    && rustup install stable
-# ---------------------------------------------------------------
-# Required to install `libsndfile1` and `ffmpeg` for audio processing
+RUN curl https://sh.rustup.rs -sSf > /rust.sh && sh /rust.sh -y && rustup install stable
+
+# Install system dependencies
 RUN apt update && \
     apt upgrade -y && \
     apt install -y libsndfile1 ffmpeg
-# ---------------------------------------------------------------
 
 WORKDIR /app
-
-# Copy service account key for Google Drive API
-COPY service_account.json .
 
 # Copy requirements and Makefile
 COPY ["requirements.txt", "Makefile", "./"]
@@ -25,12 +19,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install fastapi uvicorn
 RUN pip install --no-cache-dir google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2
 
-# Copy application code
+# Copy application files
 COPY configs.yaml .
 COPY src/ src/
-COPY api.py .  
+COPY api.py .
 
-# ---------------------------------------------------------------
-# Run the FastAPI server
-# ---------------------------------------------------------------
+# Default command to run FastAPI app
 CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
