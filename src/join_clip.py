@@ -3,7 +3,7 @@ import logging
 import shutil
 from pathlib import Path
 
-from moviepy.editor import VideoFileClip, concatenate_videoclips
+from moviepy import VideoFileClip, concatenate_videoclips
 
 from src.common import SCENES_DIR, TRAILER_DIR
 
@@ -16,7 +16,7 @@ def join_clips(clip_combinations: list[tuple[str]], trailer_dir: Path) -> None:
         trailer_dir (Path): Directory save the trailers
     """
     for idx, clip_combination in enumerate(clip_combinations):
-        logger.info(f"Generating trailer {idx+1}")
+        logger.info("Generating trailer %s", idx+1)
         trailer_path = trailer_dir / f"trailer_{idx+1}.mp4"
         clips = [VideoFileClip(str(clip_path)) for clip_path in clip_combination]
         trailer = concatenate_videoclips(clips)

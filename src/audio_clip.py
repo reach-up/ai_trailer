@@ -1,7 +1,7 @@
 import logging
 import shutil
 
-from moviepy.editor import AudioFileClip, CompositeAudioClip, VideoFileClip
+from moviepy import AudioFileClip, CompositeAudioClip, VideoFileClip
 
 from src.common import SCENES_DIR, configs
 
