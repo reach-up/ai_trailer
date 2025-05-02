@@ -28,9 +28,8 @@ RUN python -c "import os; os.environ['COQUI_TOS_AGREED']='1'; \
     import torch; \
     from TTS.api import TTS; \
     from TTS.tts.configs.xtts_config import XttsConfig; \
-    from TTS.tts.configs.shared_configs import XttsAudioConfig; \
+    from TTS.tts.models.xtts import XttsAudioConfig, XttsArgs; \
     from TTS.config.shared_configs import BaseDatasetConfig; \
-    from TTS.utils.arguments import XttsArgs; \
     torch.serialization.add_safe_globals([XttsConfig, XttsAudioConfig, BaseDatasetConfig, XttsArgs]); \
     TTS(model_name='tts_models/multilingual/multi-dataset/xtts_v2', progress_bar=True); \
     print('TTS model pre-downloaded successfully')"
