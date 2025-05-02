@@ -28,18 +28,33 @@ def generate_voice(
         reference_voice_path (str): Reference audio file used for voice cloning
         language (str): Language used for the TTS model
     """
-    reference_voice_path = Path(reference_voice_path)
-    if not reference_voice_path.exists():
-        logger.warning(f"Reference voice file {reference_voice_path} does not exist. Using default speaker.")
-        speaker_wav = None
+    # Resolve reference voice path relative to project root (parent of src)
+    # so it works regardless of current working directory
+    ref_path = Path(reference_voice_path)
+    if not ref_path.is_absolute():
+        project_root = Path(__file__).resolve().parent.parent  # /app in Docker
+        ref_path = project_root / ref_path
+
+    speaker_wav = None
+    speaker_kwarg = {}
+
+    if ref_path.exists():
+        speaker_wav = str(ref_path)
+        logger.info("Using reference voice file: %s", ref_path)
     else:
-        speaker_wav = str(reference_voice_path)
+        logger.warning(
+            "Reference voice file %s does not exist. Falling back to default speaker.",
+            ref_path,
+        )
+        # For multi-speaker models we must pass a speaker id when no wav is given
+        speaker_kwarg = {"speaker": 0}
 
     model.tts_to_file(
         text,
         speaker_wav=speaker_wav,
         language=language,
         file_path=audio_path,
+        **speaker_kwarg,
     )
 
 
