@@ -38,6 +38,7 @@ RUN python -c "import os; os.environ['COQUI_TOS_AGREED']='1'; \
 COPY configs.yaml .
 COPY src/ src/
 COPY api.py .
+COPY voices/ voices/
 
 # Default command to run FastAPI app
 CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
