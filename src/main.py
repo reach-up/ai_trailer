@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+import importlib
 
 # Setup logging
 logging.basicConfig(
@@ -38,8 +39,6 @@ def main():
             # Only run plot_retrieval if we don't have a plot yet
             logger.info("No plot found, attempting to retrieve plot from IMDB")
             # Only import the module if we need it
-            import importlib
-
             try:
                 plot_module = importlib.import_module("src.plot_retrieval")
                 logger.info("Successfully imported plot_retrieval module")
@@ -50,6 +49,14 @@ def main():
         # Step 2: Split the plot into subplots/scenes
         logger.info("Step 2: Generating subplots from main plot")
         run_module("subplot")
+
+        # Reload common to refresh scene directories created by subplot
+        try:
+            import src.common as common
+            importlib.reload(common)
+            logger.info("Reloaded src.common; updated SCENES_DIR count: %s", len(common.SCENES_DIR))
+        except Exception as e:
+            logger.error("Failed to reload src.common: %s", e)
 
         # Step 3: Generate voice-overs for the subplots
         logger.info("Step 3: Generating voice-overs")
