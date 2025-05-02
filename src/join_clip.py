@@ -4,10 +4,7 @@ import shutil
 import traceback
 from pathlib import Path
 
-from moviepy.video.compositing.concatenate import concatenate_videoclips
-
-# Import MoviePy components using specific module paths to avoid import errors
-from moviepy.video.io.VideoFileClip import VideoFileClip
+from moviepy.editor import VideoFileClip, concatenate_videoclips
 
 from src.common import SCENES_DIR, TRAILER_DIR
 

@@ -3,7 +3,7 @@ import shutil
 
 from moviepy import AudioFileClip, CompositeAudioClip, VideoFileClip
 
-from src.common import SCENES_DIR, configs
+from src.common import SCENES_DIR, configs, PROJECT_DIR
 
 
 def get_audio_clips(clip_volume: float, voice_volume: float) -> None:
@@ -29,14 +29,35 @@ def get_audio_clips(clip_volume: float, voice_volume: float) -> None:
         audios_dir = scene_dir / "audios"
         audio_clips_dir = scene_dir / "audio_clips"
 
-        # Check if directories exist
-        if not clips_dir.exists():
-            logger.error("Clips directory not found: %s", clips_dir)
+        # Define possible locations for clips and audios
+        clips_locations = [clips_dir, PROJECT_DIR / "clips"]
+        audios_locations = [audios_dir, PROJECT_DIR / "audios"]
+        
+        # Look for clip files in all possible locations
+        clip_files = []
+        for clips_loc in clips_locations:
+            if clips_loc.exists():
+                logger.info("Looking for clips in %s", clips_loc)
+                clip_files.extend(list(clips_loc.glob("*.mp4")))
+        
+        if not clip_files:
+            logger.error("No clip files found in any directory")
             continue
-
-        if not audios_dir.exists():
-            logger.error("Audios directory not found: %s", audios_dir)
+            
+        logger.info("Found %s clip files", len(clip_files))
+        
+        # Look for audio files in all possible locations
+        audio_files = []
+        for audios_loc in audios_locations:
+            if audios_loc.exists():
+                logger.info("Looking for audio files in %s", audios_loc)
+                audio_files.extend(list(audios_loc.glob("*.wav")))
+                
+        if not audio_files:
+            logger.error("No audio files found in any directory")
             continue
+            
+        logger.info("Found %s audio files", len(audio_files))
 
         logger.info(
             "Directories verified: clips_dir=%s, audios_dir=%s", clips_dir, audios_dir
