@@ -101,17 +101,20 @@ async def generate_trailer(request: Request):
         fh = io.FileIO(video_path, "wb")
         downloader = MediaIoBaseDownload(fh, request_drive)
 
+        logger.info("Starting video download from Google Drive with file_id: %s", file_id)
         done = False
         while not done:
             status, done = downloader.next_chunk()
             if status:
-                print(f"Download progress: {int(status.progress() * 100)}%")
+                logger.info("Download progress: %d%%", int(status.progress() * 100))
 
-        print("Video downloaded:", video_path)
+        logger.info("Video successfully downloaded to: %s", video_path)
 
         # Run the main processing script
-        # It will use the updated configs.yaml file
-        subprocess.run(["python", "src/main.py"])
+        # We need to run it in a way that allows it to find the src module
+        # Use the -m flag to run the module as a package
+        logger.info("Starting trailer generation process with main.py")
+        subprocess.run(["python", "-m", "src.main"])
 
         return {"status": "started", "video": video_path}
     except json.JSONDecodeError as e:
