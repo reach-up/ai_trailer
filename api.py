@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Request
 import subprocess
 from TTS.api import TTS
+from TTS.tts.configs.xtts_config import XttsConfig
 import torch.serialization
 
  
-torch.serialization.add_safe_globals(["TTS.tts.configs.xtts_config.XttsConfig"])
+torch.serialization.add_safe_globals([XttsConfig])
 
 app = FastAPI()
 
