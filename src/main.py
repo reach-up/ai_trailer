@@ -51,17 +51,17 @@ def main():
         logger.info("Step 2: Generating subplots from main plot")
         run_module("subplot")
 
-        # Step 3: Generate frames from the subplots
-        logger.info("Step 3: Generating frames")
+        # Step 3: Generate voice-overs for the subplots
+        logger.info("Step 3: Generating voice-overs")
+        run_module("voice")
+
+        # Step 4: Generate frames from the subplots
+        logger.info("Step 4: Generating frames")
         run_module("frame")
 
-        # Step 4: Retrieve images based on the frames
-        logger.info("Step 4: Retrieving images")
+        # Step 5: Retrieve images based on the frames
+        logger.info("Step 5: Retrieving images")
         run_module("image_retrieval")
-
-        # Step 5: Generate voice-overs for the subplots
-        logger.info("Step 5: Generating voice-overs")
-        run_module("voice")
 
         # Step 6: Create video clips for each frame
         logger.info("Step 6: Creating video clips")
