@@ -43,7 +43,7 @@ def get_clip(video: VideoFileClip, min_clip_len: int) -> None:
                 clip_start = frame // fps
                 clip_end = min((clip_start + audio_duration), video.duration)
 
-                clip = video.subclip(clip_start, clip_end)
+                clip = video.subclipped(clip_start, clip_end)
 
                 clip.write_videofile(
                     f"{clip_dir}/clip_{frame}_{audio_filename}.mp4",
