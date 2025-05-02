@@ -1,16 +1,18 @@
 import logging
 import shutil
-import torch.serialization
 
+import torch.serialization
 from TTS.api import TTS
-from TTS.tts.configs.xtts_config import XttsConfig
-from TTS.tts.models.xtts import XttsAudioConfig, XttsArgs
 from TTS.config.shared_configs import BaseDatasetConfig
+from TTS.tts.configs.xtts_config import XttsConfig
+from TTS.tts.models.xtts import XttsArgs, XttsAudioConfig
 
 from src.common import SCENES_DIR, configs
 
 # Register safe globals for PyTorch serialization
-torch.serialization.add_safe_globals([XttsConfig, XttsAudioConfig, BaseDatasetConfig, XttsArgs])
+torch.serialization.add_safe_globals(
+    [XttsConfig, XttsAudioConfig, BaseDatasetConfig, XttsArgs]
+)
 
 
 def generate_voice(
@@ -47,7 +49,7 @@ def generate_voices(
     for idx, scene_dir in enumerate(SCENES_DIR):
         scene_plot = (scene_dir / "subplot.txt").read_text()
         audio_dir = scene_dir / "audios"
-        logger.info('Generating audio for scene %s with plot "%s"', idx+1, scene_plot)
+        logger.info('Generating audio for scene %s with plot "%s"', idx + 1, scene_plot)
 
         if audio_dir.exists():
             shutil.rmtree(audio_dir)
@@ -55,7 +57,7 @@ def generate_voices(
         audio_dir.mkdir(parents=True, exist_ok=True)
 
         for idx in range(n_audios):
-            logger.info("Generating audio %s", idx+1)
+            logger.info("Generating audio %s", idx + 1)
             voice_path = audio_dir / f"audio_{idx+1}.wav"
             generate_voice(
                 model, scene_plot, str(voice_path), reference_voice_path, language
