@@ -1,9 +1,41 @@
 import logging
 import math
 import shutil
+import sys
+import logging
 
-import librosa
-from moviepy.editor import VideoFileClip
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__file__)
+
+# Debug info about installed packages
+logger.info("Python path: %s", sys.path)
+logger.info("Installed packages: %s", sys.modules.keys())
+
+try:
+    import librosa
+    logger.info("Successfully imported librosa")
+except ImportError as e:
+    logger.error("Failed to import librosa: %s", e)
+
+try:
+    import moviepy
+    logger.info("Successfully imported moviepy. Version: %s", moviepy.__version__)
+    from moviepy.editor import VideoFileClip
+    logger.info("Successfully imported VideoFileClip from moviepy.editor")
+except ImportError as e:
+    logger.error("Failed to import moviepy: %s", e)
+    # Try to install moviepy on the fly
+    logger.info("Attempting to install moviepy...")
+    import subprocess
+    result = subprocess.run([sys.executable, "-m", "pip", "install", "moviepy"], capture_output=True, text=True)
+    logger.info("Installation result: %s", result.stdout)
+    logger.error("Installation error (if any): %s", result.stderr)
+    try:
+        import moviepy
+        from moviepy.editor import VideoFileClip
+        logger.info("Successfully installed and imported moviepy after pip install")
+    except ImportError as e2:
+        logger.error("Still failed to import moviepy after installation attempt: %s", e2)
 
 from src.common import SCENES_DIR, configs
 

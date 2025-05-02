@@ -42,28 +42,32 @@ def main():
                 logger.error("Failed to import plot_retrieval module: %s", str(e))
                 raise
         
-        # Step 2: Generate frames from the subplots
-        logger.info("Step 2: Generating frames")
+        # Step 2: Split the plot into subplots/scenes
+        logger.info("Step 2: Generating subplots from main plot")
+        run_module("subplot")
+        
+        # Step 3: Generate frames from the subplots
+        logger.info("Step 3: Generating frames")
         run_module("frame")
         
-        # Step 3: Retrieve images based on the frames
-        logger.info("Step 3: Retrieving images")
+        # Step 4: Retrieve images based on the frames
+        logger.info("Step 4: Retrieving images")
         run_module("image_retrieval")
         
-        # Step 4: Generate voice-overs for the subplots
-        logger.info("Step 4: Generating voice-overs")
+        # Step 5: Generate voice-overs for the subplots
+        logger.info("Step 5: Generating voice-overs")
         run_module("voice")
         
-        # Step 5: Create video clips for each frame
-        logger.info("Step 5: Creating video clips")
+        # Step 6: Create video clips for each frame
+        logger.info("Step 6: Creating video clips")
         run_module("clip")
         
-        # Step 6: Add audio to the video clips
-        logger.info("Step 6: Adding audio to video clips")
+        # Step 7: Add audio to the video clips
+        logger.info("Step 7: Adding audio to video clips")
         run_module("audio_clip")
         
-        # Step 7: Join all clips to create the final trailer
-        logger.info("Step 7: Joining clips to create final trailer")
+        # Step 8: Join all clips to create the final trailer
+        logger.info("Step 8: Joining clips to create final trailer")
         run_module("join_clip")
         
         logger.info("AI trailer generation completed successfully!")
