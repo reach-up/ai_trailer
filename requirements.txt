@@ -3,7 +3,7 @@ cinemagoer>=2023.5.1
 opencv-python>=4.9.0.80
 numpy>=1.26.3
 sentence-transformers>=2.2.2
-moviepy>=1.0.3
+moviepy>=2.0.0
 TTS>=0.22.0
 pytube>=15.0.0
 google-api-python-client
