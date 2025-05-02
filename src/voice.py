@@ -8,6 +8,7 @@ from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import XttsArgs, XttsAudioConfig
 
 from src.common import SCENES_DIR, configs
+from pathlib import Path
 
 # Register safe globals for PyTorch serialization
 torch.serialization.add_safe_globals(
@@ -27,9 +28,16 @@ def generate_voice(
         reference_voice_path (str): Reference audio file used for voice cloning
         language (str): Language used for the TTS model
     """
+    reference_voice_path = Path(reference_voice_path)
+    if not reference_voice_path.exists():
+        logger.warning(f"Reference voice file {reference_voice_path} does not exist. Using default speaker.")
+        speaker_wav = None
+    else:
+        speaker_wav = str(reference_voice_path)
+
     model.tts_to_file(
         text,
-        speaker_wav=reference_voice_path,
+        speaker_wav=speaker_wav,
         language=language,
         file_path=audio_path,
     )

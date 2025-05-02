@@ -2,7 +2,9 @@ import logging
 import os
 import sys
 from pathlib import Path
+import src.common as common
 import importlib
+
 
 # Setup logging
 logging.basicConfig(
@@ -53,8 +55,12 @@ def main():
         # Reload common to refresh scene directories created by subplot
         try:
             import src.common as common
+
             importlib.reload(common)
-            logger.info("Reloaded src.common; updated SCENES_DIR count: %s", len(common.SCENES_DIR))
+            logger.info(
+                "Reloaded src.common; updated SCENES_DIR count: %s",
+                len(common.SCENES_DIR),
+            )
         except Exception as e:
             logger.error("Failed to reload src.common: %s", e)
 
