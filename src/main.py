@@ -80,10 +80,28 @@ def run_module(module_name):
         module_name (str): Name of the module to run (without .py extension)
     """
     try:
-        # Import the module dynamically
-        module = __import__(module_name)
+        # Execute the module as a script by reloading the module
+        # This is necessary for modules with code at the module level
+        logger.info("Running module: %s", module_name)
+        module_path = os.path.join(os.path.dirname(__file__), f"{module_name}.py")
+        
+        if not os.path.exists(module_path):
+            raise FileNotFoundError(f"Module file not found: {module_path}")
+            
+        # Use exec to run the module contents
+        with open(module_path, 'r') as f:
+            module_code = f.read()
+            
+        # Create a custom namespace for the module
+        module_globals = {
+            '__file__': module_path,
+            '__name__': f'src.{module_name}'
+        }
+        
+        # Execute the module code
+        exec(module_code, module_globals)
         logger.info("Successfully completed module: %s", module_name)
-    except (ImportError, ModuleNotFoundError, AttributeError, SyntaxError) as e:
+    except (ImportError, ModuleNotFoundError, AttributeError, SyntaxError, FileNotFoundError) as e:
         logger.error("Error running module %s: %s", module_name, str(e))
         raise
 
