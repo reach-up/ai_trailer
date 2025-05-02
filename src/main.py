@@ -23,9 +23,24 @@ def main():
     os.chdir(project_dir)
     
     try:
-        # Step 1: Process the plot to generate subplots
-        logger.info("Step 1: Processing plot to generate subplots")
-        run_module("plot_retrieval")
+        # Check if we need to run plot_retrieval
+        from src.common import PLOT_PATH
+        
+        # If the plot file exists from the API request, skip plot_retrieval entirely
+        if PLOT_PATH.exists():
+            logger.info("Plot already provided via API request, skipping plot_retrieval step")
+            # In this case we DON'T import or run plot_retrieval at all
+        else:
+            # Only run plot_retrieval if we don't have a plot yet
+            logger.info("No plot found, attempting to retrieve plot from IMDB")
+            # Only import the module if we need it
+            import importlib
+            try:
+                plot_module = importlib.import_module("src.plot_retrieval")
+                logger.info("Successfully imported plot_retrieval module")
+            except Exception as e:
+                logger.error("Failed to import plot_retrieval module: %s", str(e))
+                raise
         
         # Step 2: Generate frames from the subplots
         logger.info("Step 2: Generating frames")

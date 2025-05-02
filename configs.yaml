@@ -6,7 +6,7 @@ plot_filename: 'plot.txt'
 video_retrieval:
   video_url: 'https://www.youtube.com/watch?v=fdcEKPS6tOQ'
 plot_retrieval:
-  video_id: 
+  video_id:
 subplot:
   split_char:
 voice:

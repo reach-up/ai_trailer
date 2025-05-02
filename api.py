@@ -34,15 +34,36 @@ tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2")
 async def generate_trailer(request: Request):
     try:
         data = await request.json()
-        plot = data.get("plot", "Default plot...")
+        
+        # Require plot parameter - no defaults
+        if "plot" not in data or not data["plot"].strip():
+            return {"error": "Missing or empty 'plot' parameter"}
+        plot = data["plot"]
+        
+        # Require file_id parameter
         file_id = data.get("file_id")
-
         if not file_id:
-            return {"error": "Missing file_id"}
+            return {"error": "Missing 'file_id' parameter"}
+            
+        # Store video_id if provided but don't require it
+        # (it's only needed if the API-provided plot is missing)
+        video_id = data.get("video_id")
 
-        # Save plot to file
-        with open("plot.txt", "w") as f:
-            f.write(plot)
+        # Only update the video_id in config if one was provided
+        if video_id:
+            configs["plot_retrieval"]["video_id"] = video_id
+
+        # Make sure the project directory exists
+        from src.common import PLOT_PATH, PROJECT_DIR
+        
+        # Ensure project directory exists
+        PROJECT_DIR.mkdir(parents=True, exist_ok=True)
+        
+        # Save plot to the correct location
+        PLOT_PATH.write_text(plot)
+        logger.info("Saved plot to %s", PLOT_PATH)
+        
+        # The plot is now directly related to the video we'll download
 
         # Load service account credentials from environment secret
         SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
@@ -94,4 +115,13 @@ async def generate_trailer(request: Request):
 
 @app.get("/generate_trailer")
 async def get_generate_trailer():
-    return {"message": "This endpoint requires a POST request with JSON data including 'plot' and 'file_id' fields."}
+    return {
+        "message": "This endpoint requires a POST request with the following JSON data:",
+        "required_fields": [
+            "plot: text description to use for the trailer",
+            "file_id: Google Drive file ID of the video to use"
+        ],
+        "optional_fields": [
+            "video_id: IMDB ID (only used as fallback if plot retrieval needs to be run)"
+        ]
+    }
