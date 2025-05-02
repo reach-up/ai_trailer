@@ -14,20 +14,22 @@ RUN apt update && \
 # ---------------------------------------------------------------
 
 WORKDIR /app
+
+# Copy requirements and Makefile
 COPY ["requirements.txt", "Makefile", "./"]
-RUN pip install -r requirements.txt
 
-
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install fastapi uvicorn
 
+# Copy remaining files
 COPY configs.yaml .
 COPY src/ src/
 COPY api.py .  
 
 # ---------------------------------------------------------------
-# `TTS` prompts the user to accept terms, here I donwload a model and agree with them
-RUN yes | python -c "from TTS.api import TTS; TTS(model_name='tts_models/multilingual/multi-dataset/xtts_v2')"
+# Removed broken TTS preload step (model will load at runtime)
 # ---------------------------------------------------------------
 
-
+# Run API server
 CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
