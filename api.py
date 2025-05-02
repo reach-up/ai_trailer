@@ -2,14 +2,14 @@ from fastapi import FastAPI, Request
 import subprocess
 from TTS.api import TTS
 from TTS.tts.configs.xtts_config import XttsConfig
+from TTS.tts.models.xtts import XttsAudioConfig
 import torch.serialization
 
- 
-torch.serialization.add_safe_globals([XttsConfig])
+
+torch.serialization.add_safe_globals([XttsConfig, XttsAudioConfig])
 
 app = FastAPI()
 
- 
 tts = TTS(model_name="tts_models/multilingual/multi-dataset/xtts_v2")
 
 @app.post("/generate_trailer")
