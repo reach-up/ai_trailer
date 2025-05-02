@@ -6,3 +6,7 @@ sentence-transformers>=2.2.2
 moviepy>=1.0.3
 TTS>=0.22.0
 pytube>=15.0.0
+google-api-python-client
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
