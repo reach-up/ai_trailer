@@ -2,7 +2,7 @@ import logging
 
 from imdb import Cinemagoer
 
-from common import PLOT_PATH, configs
+from src.common import PLOT_PATH, configs
 
 
 def get_video_plot(video_id) -> str:

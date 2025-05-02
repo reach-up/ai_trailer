@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pytube import YouTube
 
-from common import PROJECT_DIR, configs
+from src.common import PROJECT_DIR, configs
 
 
 def get_video(video_url: str, video_path: Path) -> None:

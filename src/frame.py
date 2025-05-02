@@ -3,7 +3,7 @@ import shutil
 
 import cv2
 
-from common import FRAMES_DIR, configs
+from src.common import FRAMES_DIR, configs
 
 
 def create_screeshots(video_path: str, n_frames: int) -> None:

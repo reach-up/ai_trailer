@@ -19,6 +19,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install fastapi uvicorn
 RUN pip install --no-cache-dir google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2
 
+# Pre-download TTS model to avoid downloading it on every container start
+RUN python -c "from TTS.api import TTS; TTS(model_name='tts_models/multilingual/multi-dataset/xtts_v2', progress_bar=True); print('TTS model pre-downloaded successfully')"
+
 # Copy application files
 COPY configs.yaml .
 COPY src/ src/

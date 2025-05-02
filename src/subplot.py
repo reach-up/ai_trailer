@@ -1,7 +1,7 @@
 import logging
 import shutil
 
-from common import PLOT_PATH, PROJECT_DIR, configs
+from src.common import PLOT_PATH, PROJECT_DIR, configs
 
 
 def get_sub_plots(plot: str, split_char: str) -> None:

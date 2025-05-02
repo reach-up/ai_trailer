@@ -5,7 +5,7 @@ import shutil
 import librosa
 from moviepy.editor import VideoFileClip
 
-from common import SCENES_DIR, configs
+from src.common import SCENES_DIR, configs
 
 
 def get_clip(video: VideoFileClip, min_clip_len: int) -> None:

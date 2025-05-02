@@ -5,7 +5,7 @@ from pathlib import Path
 
 from moviepy.editor import VideoFileClip, concatenate_videoclips
 
-from common import SCENES_DIR, TRAILER_DIR
+from src.common import SCENES_DIR, TRAILER_DIR
 
 
 def join_clips(clip_combinations: list[tuple[str]], trailer_dir: Path) -> None:

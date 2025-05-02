@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 from sentence_transformers import SentenceTransformer, util
 
-from common import FRAMES_DIR, SCENES_DIR, configs
+from src.common import FRAMES_DIR, SCENES_DIR, configs
 
 
 def get_image_embeddings(

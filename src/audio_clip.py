@@ -3,7 +3,7 @@ import shutil
 
 from moviepy.editor import AudioFileClip, CompositeAudioClip, VideoFileClip
 
-from common import SCENES_DIR, configs
+from src.common import SCENES_DIR, configs
 
 
 def get_audio_clips(clip_volume: float, voice_volume: float) -> None:

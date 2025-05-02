@@ -3,7 +3,7 @@ import shutil
 
 from TTS.api import TTS
 
-from common import SCENES_DIR, configs
+from src.common import SCENES_DIR, configs
 
 
 def generate_voice(
