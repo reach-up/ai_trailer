@@ -9,7 +9,7 @@ logger = logging.getLogger(__file__)
 import librosa
 from moviepy import VideoFileClip
 
-from src.common import SCENES_DIR, configs
+from src.common import SCENES_DIR, configs, PROJECT_DIR
 
 
 def get_clip(video: VideoFileClip, min_clip_len: int) -> None:
@@ -41,25 +41,25 @@ def get_clip(video: VideoFileClip, min_clip_len: int) -> None:
         # Check for audio files - look in both scene dir and project audio dir
         scene_audio_dir = scene_dir / "audios"
         project_audio_dir = PROJECT_DIR / "audios"
-        
+
         audio_filepaths = []
         if scene_audio_dir.exists():
             audio_filepaths.extend(list(scene_audio_dir.glob("*.wav")))
         if project_audio_dir.exists():
             audio_filepaths.extend(list(project_audio_dir.glob("*.wav")))
-            
+
         logger.info("Found %s audio files for scene %s", len(audio_filepaths), idx + 1)
 
         # Check for frame files - look in both scene dir and project frames dir
         scene_frames_dir = scene_dir / "frames"
         project_frames_dir = PROJECT_DIR / "frames"
-        
+
         frame_paths = []
         if scene_frames_dir.exists():
             frame_paths.extend(list(scene_frames_dir.glob("*.jpg")))
         if project_frames_dir.exists():
             frame_paths.extend(list(project_frames_dir.glob("*.jpg")))
-            
+
         logger.info("Found %s frame files for scene %s", len(frame_paths), idx + 1)
 
         if clip_dir.exists():
