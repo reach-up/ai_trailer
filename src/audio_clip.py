@@ -32,31 +32,31 @@ def get_audio_clips(clip_volume: float, voice_volume: float) -> None:
         # Define possible locations for clips and audios
         clips_locations = [clips_dir, PROJECT_DIR / "clips"]
         audios_locations = [audios_dir, PROJECT_DIR / "audios"]
-        
+
         # Look for clip files in all possible locations
         clip_files = []
         for clips_loc in clips_locations:
             if clips_loc.exists():
                 logger.info("Looking for clips in %s", clips_loc)
                 clip_files.extend(list(clips_loc.glob("*.mp4")))
-        
+
         if not clip_files:
             logger.error("No clip files found in any directory")
             continue
-            
+
         logger.info("Found %s clip files", len(clip_files))
-        
+
         # Look for audio files in all possible locations
         audio_files = []
         for audios_loc in audios_locations:
             if audios_loc.exists():
                 logger.info("Looking for audio files in %s", audios_loc)
                 audio_files.extend(list(audios_loc.glob("*.wav")))
-                
+
         if not audio_files:
             logger.error("No audio files found in any directory")
             continue
-            
+
         logger.info("Found %s audio files", len(audio_files))
 
         logger.info(
@@ -156,8 +156,6 @@ def get_audio_clips(clip_volume: float, voice_volume: float) -> None:
 
                         final_clip.write_videofile(
                             output_path,
-                            verbose=False,
-                            logger=None,
                         )
 
                         scene_audio_clips += 1
