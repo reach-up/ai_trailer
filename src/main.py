@@ -1,8 +1,9 @@
 import logging
 import os
 import sys
+import argparse
 from pathlib import Path
-import src.common as common
+import yaml
 import importlib
 
 
@@ -19,17 +20,43 @@ def main():
     Orchestrates the entire process of generating a trailer from a plot and video.
     """
     logger.info("Starting AI trailer generation pipeline")
-
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='AI Trailer Generator')
+    parser.add_argument('--config', type=str, help='Path to project configuration file')
+    args = parser.parse_args()
+    
     # Get the absolute path to the src directory
     src_dir = Path(__file__).parent.absolute()
     project_dir = src_dir.parent
-
+    
     # Make sure we're working in the project directory
     os.chdir(project_dir)
+    
+    # Load project-specific configuration if provided
+    if args.config:
+        config_path = Path(args.config)
+        if config_path.exists():
+            logger.info(f"Loading project-specific configuration from {config_path}")
+            with open(config_path, 'r') as f:
+                project_configs = yaml.safe_load(f)
+                
+            # Initialize the common module with project-specific config
+            import src.common as common
+            common.initialize_with_config(project_configs)
+        else:
+            logger.error(f"Config file not found: {config_path}")
+            return 1
+    else:
+        # Use default configuration
+        logger.info("No project configuration specified, using default config")
+        import src.common as common
 
     try:
         # Check if we need to run plot_retrieval
         from src.common import PLOT_PATH
+        
+        logger.info(f"Checking for plot file at: {PLOT_PATH}")
 
         # If the plot file exists from the API request, skip plot_retrieval entirely
         if PLOT_PATH.exists():

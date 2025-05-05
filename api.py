@@ -49,9 +49,9 @@ def get_tts_model():
 
 
 @app.post("/generate_trailer")
-async def generate_trailer(request: Request, base_request: StarletteRequest):
+async def generate_trailer(request: Request):
     # Get base URL for constructing absolute URLs
-    base_url = str(base_request.base_url).rstrip('/')
+    base_url = str(request.base_url).rstrip('/')
     try:
         data = await request.json()
 
@@ -64,24 +64,45 @@ async def generate_trailer(request: Request, base_request: StarletteRequest):
         file_id = data.get("file_id")
         if not file_id:
             return {"error": "Missing 'file_id' parameter"}
-
-        # Store video_id if provided but don't require it
-        # (it's only needed if the API-provided plot is missing)
+            
+        # Allow custom project name or generate one based on file ID and timestamp
+        import time
+        import uuid
+        project_name = data.get("project_name") or f"project_{file_id[-6:]}_{int(time.time())}"
+        
+        # Clean project name to ensure it's valid for filesystem
+        import re
+        project_name = re.sub(r'[^\w-]', '_', project_name)
+        logger.info(f"Creating trailer for project: {project_name}")
+        
+        # Create a copy of the default configs
+        import copy
+        project_configs = copy.deepcopy(configs)
+        
+        # Update config with project-specific values
+        project_configs["project_name"] = project_name
+        
+        # Store video_id if provided (needed if the API-provided plot is missing)
         video_id = data.get("video_id")
-
-        # Only update the video_id in config if one was provided
         if video_id:
-            configs["plot_retrieval"]["video_id"] = video_id
+            project_configs["plot_retrieval"]["video_id"] = video_id
 
-        # Make sure the project directory exists
-        from src.common import PLOT_PATH, PROJECT_DIR
-
-        # Ensure project directory exists
-        PROJECT_DIR.mkdir(parents=True, exist_ok=True)
-
-        # Save plot to the correct location
-        PLOT_PATH.write_text(plot)
-        logger.info("Saved plot to %s", PLOT_PATH)
+        # Set up project-specific paths
+        from pathlib import Path
+        project_dir = Path(f"{project_configs['project_dir']}/{project_name}")
+        plot_path = project_dir / project_configs["plot_filename"]
+        frames_dir = project_dir / "frames"
+        trailer_dir = project_dir / "trailers"
+        movies_dir = project_dir / project_configs["movies_dir"]
+        
+        # Create all needed directories
+        for directory in [project_dir, frames_dir, trailer_dir, movies_dir]:
+            directory.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Created directory: {directory}")
+        
+        # Save plot to the project-specific location
+        plot_path.write_text(plot)
+        logger.info("Saved plot to %s", plot_path)
 
         # The plot is now directly related to the video we'll download
 
@@ -103,12 +124,14 @@ async def generate_trailer(request: Request, base_request: StarletteRequest):
         filename = f"input_{file_id[-6:]}.mp4"  # Use last 6 chars of ID for brevity
         video_path = str(MOVIES_DIR / filename)
 
-        # Update configs with the actual video path that was used
-        configs["video_path"] = video_path
-
-        # Save updated configs for future reference
-        with open("configs.yaml", "w") as f:
-            yaml.safe_dump(configs, f)
+        # Update configs with the project-specific video path
+        project_configs["video_path"] = video_path
+        
+        # Save project-specific configs
+        project_config_path = project_dir / "project_config.yaml"
+        with open(project_config_path, "w") as f:
+            yaml.safe_dump(project_configs, f)
+        logger.info(f"Saved project config to {project_config_path}")
 
         # Download video from Google Drive
         request_drive = drive_service.files().get_media(fileId=file_id)
@@ -132,25 +155,26 @@ async def generate_trailer(request: Request, base_request: StarletteRequest):
         logger.info("Starting trailer generation process with main.py")
 
         try:
-            # Run the subprocess without capturing output so logs appear in server console
+            # Run the subprocess with the project config path as an argument
             result = subprocess.run(
-                ["python", "-m", "src.main"],
+                ["python", "-m", "src.main", "--config", str(project_config_path)],
                 check=True  # This will raise an exception if the process exits with non-zero status
             )
             
             logger.info("Trailer generation process completed with exit code %d", result.returncode)
             
-            # Find the generated trailer file
-            trailer_path = TRAILER_DIR / "final_trailer.mp4"
+            # Find the generated trailer file in the project-specific trailer directory
+            trailer_path = trailer_dir / "final_trailer.mp4"
             
             if trailer_path.exists():
                 logger.info("Found generated trailer at %s", trailer_path)
                 # Return both the input video path and the trailer path
                 return {
                     "status": "success", 
+                    "project_name": project_name,
                     "input_video": video_path,
                     "trailer": str(trailer_path),
-                    "download_url": f"{base_url}/download_trailer?project={configs['project_name']}"
+                    "download_url": f"{base_url}/download_trailer?project={project_name}"
                 }
             else:
                 logger.error("Trailer generation completed but no trailer file found at %s", trailer_path)
