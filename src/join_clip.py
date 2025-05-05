@@ -1,115 +1,67 @@
-import itertools
 import logging
 import shutil
 import traceback
 from pathlib import Path
-
-from moviepy import VideoFileClip, CompositeVideoClip
+from moviepy import VideoFileClip, concatenate_videoclips
 
 from src.common import SCENES_DIR, TRAILER_DIR
 
 
-def join_clips(clip_combinations: list[tuple[str]], trailer_dir: Path) -> None:
-    """Join audio clips to create a trailer.
+def join_clips(all_scene_clips: list[list[Path]], trailer_dir: Path) -> None:
+    """Join audio clips to create a single trailer.
 
     Args:
-        clip_combinations (list[list[str]]): List of audio clips to be combined
-        trailer_dir (Path): Directory save the trailers
+        all_scene_clips (list[list[Path]]): List of audio clips for each scene
+        trailer_dir (Path): Directory to save the trailer
     """
     logger.info("\n===== Starting Trailer Generation =====")
-    logger.info("Total clip combinations to process: %s", len(clip_combinations))
-
-    if not clip_combinations:
-        logger.error(
-            "No clip combinations found. Check that audio clips were generated."
-        )
-        return
-
-    logger.info(
-        "First clip combination content: %s",
-        [str(p) for p in clip_combinations[0]] if clip_combinations else "None",
-    )
-
-    trailers_created = 0
-    for idx, clip_combination in enumerate(clip_combinations):
-        logger.info(
-            "\n----- Processing trailer %s with %s clips -----",
-            idx + 1,
-            len(clip_combination),
-        )
-
-        if not clip_combination:
-            logger.error("Empty clip combination found for trailer %s", idx + 1)
+    
+    # Create a single trailer by selecting one clip from each scene
+    trailer_clips = []
+    
+    for scene_idx, scene_clips in enumerate(all_scene_clips):
+        if not scene_clips:
+            logger.error(f"No clips found for scene {scene_idx+1}")
             continue
-
-        # Check that all clip paths exist
-        valid_paths = []
-        invalid_paths = []
-        for clip_path in clip_combination:
-            path_obj = Path(clip_path)
-            logger.info(
-                "Checking clip path: %s (exists: %s)", clip_path, path_obj.exists()
-            )
-            if path_obj.exists():
-                valid_paths.append(clip_path)
-            else:
-                invalid_paths.append(clip_path)
-                logger.error("Clip path not found: %s", clip_path)
-
-        logger.info("Valid paths: %s/%s", len(valid_paths), len(clip_combination))
-        if invalid_paths:
-            logger.error("Invalid paths: %s", invalid_paths)
-
-        if not valid_paths:
-            logger.error("No valid clip paths found for trailer %s", idx + 1)
+            
+        # Select the first clip from each scene (assumed to be the best match)
+        selected_clip_path = scene_clips[0]
+        logger.info(f"Selected clip for scene {scene_idx+1}: {selected_clip_path}")
+        
+        if not selected_clip_path.exists():
+            logger.error(f"Selected clip does not exist: {selected_clip_path}")
             continue
-
-        trailer_path = trailer_dir / f"trailer_{idx+1}.mp4"
-        logger.info("Trailer will be saved to: %s", trailer_path)
-
+            
         try:
-            logger.info("Loading clips...")
-            clips = []
-            for i, clip_path in enumerate(valid_paths):
-                try:
-                    logger.info(
-                        "Loading clip %s/%s: %s", i + 1, len(valid_paths), clip_path
-                    )
-                    clip = VideoFileClip(str(clip_path))
-                    logger.info(
-                        "Clip loaded - Duration: %s, Size: %s",
-                        clip.duration,
-                        getattr(clip, "size", "Unknown"),
-                    )
-                    clips.append(clip)
-                except Exception as clip_error:
-                    logger.error("Failed to load clip %s: %s", clip_path, clip_error)
-
-            if not clips:
-                logger.error("No clips could be loaded for trailer %s", idx + 1)
-                continue
-
-            logger.info("Concatenating %s clips for trailer %s", len(clips), idx + 1)
-            try:
-                trailer = CompositeVideoClip(clips)
-                logger.info(
-                    "Concatenation successful! Trailer duration: %s", trailer.duration
-                )
-
-                logger.info("Writing trailer to file: %s", trailer_path)
-                trailer.write_videofile(str(trailer_path))
-
-                trailers_created += 1
-                logger.info("Successfully created trailer: %s", trailer_path)
-            except Exception as concat_error:
-                logger.error("Error in concatenation or writing: %s", concat_error)
-                logger.error("Traceback: %s", traceback.format_exc())
+            clip = VideoFileClip(str(selected_clip_path))
+            logger.info(f"Loaded clip - Duration: {clip.duration}, Size: {getattr(clip, 'size', 'Unknown')}")
+            trailer_clips.append(clip)
         except Exception as e:
-            logger.error("Error creating trailer %s: %s", idx + 1, e)
-            logger.error("Traceback: %s", traceback.format_exc())
-
+            logger.error(f"Failed to load clip {selected_clip_path}: {e}")
+    
+    if not trailer_clips:
+        logger.error("No clips could be loaded for the trailer")
+        return
+        
+    # Create the trailer path
+    trailer_path = trailer_dir / "final_trailer.mp4"
+    logger.info(f"Creating single trailer at: {trailer_path}")
+    
+    try:
+        # Concatenate clips sequentially
+        logger.info(f"Concatenating {len(trailer_clips)} clips for the trailer")
+        trailer = concatenate_videoclips(trailer_clips)
+        logger.info(f"Concatenation successful! Trailer duration: {trailer.duration}")
+        
+        # Write the trailer file
+        logger.info(f"Writing trailer to file: {trailer_path}")
+        trailer.write_videofile(str(trailer_path))
+        logger.info(f"Successfully created trailer: {trailer_path}")
+    except Exception as e:
+        logger.error(f"Error creating trailer: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        
     logger.info("\n===== Trailer Generation Complete =====")
-    logger.info("Successfully created %s trailers", trailers_created)
 
 
 logging.basicConfig(level=logging.INFO)
@@ -128,24 +80,18 @@ if TRAILER_DIR.exists():
 logger.info("Creating trailer directory: %s", TRAILER_DIR)
 TRAILER_DIR.mkdir(parents=True, exist_ok=True)
 
-# Discover audio clips
+# Discover audio clips for each scene
 logger.info("Discovering audio clips in each scene directory...")
-audio_clips = []
+all_scene_clips = []
 for scene_dir in SCENES_DIR:
     scene_audio_clips = list(scene_dir.glob("audio_clips/*.mp4"))
     logger.info(
-        "Found %s audio clips in %s: %s",
+        "Found %s audio clips in %s",
         len(scene_audio_clips),
         scene_dir,
-        [f.name for f in scene_audio_clips],
     )
-    audio_clips.append(scene_audio_clips)
+    all_scene_clips.append(scene_audio_clips)
 
-# Generate combinations
-logger.info("Generating clip combinations...")
-audio_clip_combinations = list(itertools.product(*audio_clips))
-logger.info("Generated %s clip combinations", len(audio_clip_combinations))
-
-# Start joining clips
-logger.info("Starting clip joining process...")
-join_clips(audio_clip_combinations, TRAILER_DIR)
+# Start joining clips to create one final trailer
+logger.info("Starting clip joining process to create one trailer...")
+join_clips(all_scene_clips, TRAILER_DIR)

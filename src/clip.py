@@ -98,6 +98,7 @@ def get_clip(video: VideoFileClip, min_clip_len: int) -> None:
 
                         clip.write_videofile(
                             output_path,
+                            logger=None,
                         )
 
                         scene_clips += 1
