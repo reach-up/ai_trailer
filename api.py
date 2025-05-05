@@ -8,6 +8,7 @@ import base64
 import yaml
 import logging
 from pathlib import Path
+from starlette.requests import Request as StarletteRequest
 from TTS.api import TTS
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import XttsAudioConfig, XttsArgs
@@ -48,7 +49,9 @@ def get_tts_model():
 
 
 @app.post("/generate_trailer")
-async def generate_trailer(request: Request):
+async def generate_trailer(request: Request, base_request: StarletteRequest):
+    # Get base URL for constructing absolute URLs
+    base_url = str(base_request.base_url).rstrip('/')
     try:
         data = await request.json()
 
@@ -147,7 +150,7 @@ async def generate_trailer(request: Request):
                     "status": "success", 
                     "input_video": video_path,
                     "trailer": str(trailer_path),
-                    "download_url": f"/download_trailer?project={configs['project_name']}"
+                    "download_url": f"{base_url}/download_trailer?project={configs['project_name']}"
                 }
             else:
                 logger.error("Trailer generation completed but no trailer file found at %s", trailer_path)

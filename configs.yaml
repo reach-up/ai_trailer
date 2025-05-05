@@ -8,7 +8,9 @@ video_retrieval:
 plot_retrieval:
   video_id:
 subplot:
-  split_char:
+  # Use period as default split character to create more natural scene breaks
+  # This will create a new scene for each sentence in the plot
+  split_char: '.'
 voice:
   model_id: 'tts_models/multilingual/multi-dataset/xtts_v2'
   device: cpu
@@ -16,14 +18,18 @@ voice:
   tts_language: en
   n_audios: 1
 frame_sampling:
-  n_frames: 500
+  # Increased frame sampling for better matching
+  n_frames: 1000
 frame_ranking:
   model_id: 'clip-ViT-B-32'
   device: cpu
-  n_retrieved_images: 1
+  # Select more frames per subplot for more variety
+  n_retrieved_images: 3
   similarity_batch_size: 128
 clip:
-  min_clip_len: 3
+  # Increased minimum clip length for longer scenes
+  min_clip_len: 5
 audio_clip:
-  clip_volume: 0.1
-  voice_volume: 1.0
+  # Adjusted volume levels for better audio experience
+  clip_volume: 0.08
+  voice_volume: 1.2
