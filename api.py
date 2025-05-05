@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import FileResponse
 import subprocess
 import os
 import json
@@ -14,7 +15,7 @@ from TTS.config.shared_configs import BaseDatasetConfig
 import torch.serialization
 
 # Import from local modules
-from src.common import MOVIES_DIR, configs
+from src.common import MOVIES_DIR, TRAILER_DIR, configs
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -135,7 +136,25 @@ async def generate_trailer(request: Request):
             )
             
             logger.info("Trailer generation process completed with exit code %d", result.returncode)
-            return {"status": "success", "video": video_path}
+            
+            # Find the generated trailer file
+            trailer_path = TRAILER_DIR / "final_trailer.mp4"
+            
+            if trailer_path.exists():
+                logger.info("Found generated trailer at %s", trailer_path)
+                # Return both the input video path and the trailer path
+                return {
+                    "status": "success", 
+                    "input_video": video_path,
+                    "trailer": str(trailer_path),
+                    "download_url": f"/download_trailer?project={configs['project_name']}"
+                }
+            else:
+                logger.error("Trailer generation completed but no trailer file found at %s", trailer_path)
+                return {
+                    "status": "error", 
+                    "message": "Trailer generation completed but no trailer file was found"
+                }
             
         except subprocess.CalledProcessError as e:
             logger.error("Trailer generation failed with exit code %d", e.returncode)
@@ -169,3 +188,31 @@ async def get_generate_trailer():
             "video_id: IMDB ID (only used as fallback if plot retrieval needs to be run)"
         ],
     }
+
+
+@app.get("/download_trailer")
+async def download_trailer(project: str):
+    """Download the generated trailer file.
+    
+    Args:
+        project: The project name to identify which trailer to download
+    
+    Returns:
+        FileResponse: The trailer file as a downloadable response
+    """
+    logger.info("Trailer download requested for project: %s", project)
+    
+    # Construct the path to the trailer file
+    project_dir = Path(f"{configs['project_dir']}/{project}")
+    trailer_path = project_dir / "trailers" / "final_trailer.mp4"
+    
+    if not trailer_path.exists():
+        logger.error("Requested trailer file not found: %s", trailer_path)
+        return Response(content=f"Trailer file not found for project {project}", status_code=404)
+    
+    logger.info("Serving trailer file: %s", trailer_path)
+    return FileResponse(
+        path=str(trailer_path),
+        filename=f"{project}_trailer.mp4",
+        media_type="video/mp4"
+    )
