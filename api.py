@@ -122,7 +122,10 @@ async def generate_trailer(request: Request):
 
         # Create a filename based on the file_id for uniqueness
         filename = f"input_{file_id[-6:]}.mp4"  # Use last 6 chars of ID for brevity
-        video_path = str(MOVIES_DIR / filename)
+        
+        # Make sure to use the project-specific movies directory
+        video_path = str(movies_dir / filename)
+        logger.info(f"Setting video path to: {video_path}")
 
         # Update configs with the project-specific video path
         project_configs["video_path"] = video_path

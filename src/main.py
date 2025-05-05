@@ -81,15 +81,35 @@ def main():
 
         # Reload common to refresh scene directories created by subplot
         try:
+            # Import and reload common module
             import src.common as common
-
             importlib.reload(common)
+            
+            # If we're using a project-specific configuration, re-initialize with it
+            if args.config:
+                logger.info("Re-initializing common with project config after subplot generation")
+                config_path = Path(args.config)
+                if config_path.exists():
+                    with open(config_path, 'r', encoding='utf-8') as f:
+                        project_configs = yaml.safe_load(f)
+                    common.initialize_with_config(project_configs)
+            
+            # Force an update of the scene directories
+            common.update_scenes_dir()
+            
             logger.info(
-                "Reloaded src.common; updated SCENES_DIR count: %s",
+                "Updated scene directories after subplot generation. Found: %s scenes",
                 len(common.SCENES_DIR),
             )
+            
+            # Log the actual scene directories for debugging
+            for scene_dir in common.SCENES_DIR:
+                logger.info("Found scene directory: %s", scene_dir)
+                
         except Exception as e:
-            logger.error("Failed to reload src.common: %s", e)
+            logger.error("Failed to reload scene directories: %s", e)
+            import traceback
+            logger.error("Traceback: %s", traceback.format_exc())
 
         # Step 3: Generate voice-overs for the subplots
         logger.info("Step 3: Generating voice-overs")
